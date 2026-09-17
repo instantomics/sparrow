@@ -1,0 +1,37 @@
+schema_version = 1
+
+[reference]
+id = "sparrow"
+repository = "git@github.com:instantomics/sparrow.git"
+
+[candidate]
+draft = "candidate"
+
+[[integrations]]
+task_id = "segmentation"
+interface_id = "segmentation.candidate:1"
+default_preset = "vizgen"
+
+[[integrations.presets]]
+id = "vizgen"
+parameters = { background_filter_size = 135, batch_size = 8, cellprob_threshold = -4.0, clahe_clip = 18.5, diameter = 100.0, flow_threshold = 0.85, min_size = 80, torch_threads = 4 }
+
+[execution]
+entrypoint = "run_reference.py"
+api_version = 1
+allowed_tools = ["freeze_candidate", "validate_model", "start_evaluation", "wait_job", "inspect_job"]
+max_tool_calls = 9
+timeout_seconds = 2400
+network_access = "full"
+
+[environment]
+kind = "uv"
+project_root = "."
+lock = "uv.lock"
+
+[resources]
+cpus = 4
+memory_bytes = 68719476736
+walltime_seconds = 2400
+gpus = 0
+temporary_storage_bytes = 107374182400
