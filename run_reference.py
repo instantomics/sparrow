@@ -33,7 +33,7 @@ def _download_model(destination: Path) -> None:
 
 
 def run(tools, context):
-    model_path = Path(context.candidate_path) / "src/mymodel/cytotorch_0"
+    model_path = Path(context.candidate_path) / "main/src/mymodel/cytotorch_0"
     _download_model(model_path)
 
     candidate_label = context.reference_id
