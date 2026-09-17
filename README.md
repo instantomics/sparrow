@@ -18,8 +18,9 @@ incompatible with the task runtime. The wrapper therefore implements only its
 small image-preprocessing recipe and calls the pinned upstream Cellpose package
 directly; SPArrOW's SpatialData orchestration, transcript allocation, QC, and
 clustering stages are intentionally omitted because they do not define the
-submitted boundaries. Cellpose's declared NumPy upper bound is overridden to a
-Python-3.13-compatible NumPy version and checked by the reference tests.
+submitted boundaries. A reproducible compatibility wheel changes only
+Cellpose's dependency metadata so its unchanged code can use the task runtime's
+Python-3.13-compatible NumPy version.
 
 The exact Cellpose 3 `cyto` weights are downloaded before candidate freezing
 from the upstream model endpoint and accepted only when their size and SHA-256

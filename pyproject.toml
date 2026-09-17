@@ -16,6 +16,7 @@ dev = [
   "rasterio==1.4.3",
   "ruff==0.13.2",
   "shapely==2.1.2",
+  "wheel==0.45.1",
 ]
 
 [tool.uv]

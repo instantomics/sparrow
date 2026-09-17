@@ -11,9 +11,6 @@ conflicts = [[
     { package = "iomix-sparrow-segmentation-candidate", extra = "cu130" },
 ]]
 
-[manifest]
-overrides = [{ name = "numpy", specifier = "==2.2.6" }]
-
 [[package]]
 name = "affine"
 version = "2.4.0"
@@ -34,8 +31,8 @@ wheels = [
 
 [[package]]
 name = "cellpose"
-version = "3.1.1.3"
-source = { registry = "https://pypi.org/simple" }
+version = "3.1.1.3.post1"
+source = { url = "https://github.com/instantomics/sparrow/releases/download/cellpose-3.1.1.3.post1/cellpose-3.1.1.3.post1-py3-none-any.whl" }
 dependencies = [
     { name = "fastremap" },
     { name = "fill-voids" },
@@ -52,10 +49,61 @@ dependencies = [
     { name = "torch", version = "2.8.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin' or (extra == 'extra-36-iomix-sparrow-segmentation-candidate-cpu' and extra == 'extra-36-iomix-sparrow-segmentation-candidate-cu128') or (extra == 'extra-36-iomix-sparrow-segmentation-candidate-cpu' and extra == 'extra-36-iomix-sparrow-segmentation-candidate-cu130') or (extra == 'extra-36-iomix-sparrow-segmentation-candidate-cu128' and extra == 'extra-36-iomix-sparrow-segmentation-candidate-cu130')" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/17/85/47833e0b8f3fc3e9b54dfa1f3b0e11741a936749f98198c884a11980bdb3/cellpose-3.1.1.3.tar.gz", hash = "sha256:df505785d79fc5071211da008864f75edeff0588cdb76446ca89eced303a67f1", size = 23333246, upload-time = "2026-01-09T16:34:10.078Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/55/24/4c327f57a6dc3f672b956cc47a46a966475b9ddbf8b675bc0b1603e0f327/cellpose-3.1.1.3-py3-none-any.whl", hash = "sha256:0c309f306a8356ba2779054dfd8a1b4a88ea7d6c3388a6fdac99b91b21ce7ff2", size = 226352, upload-time = "2026-01-09T16:34:08.004Z" },
+    { url = "https://github.com/instantomics/sparrow/releases/download/cellpose-3.1.1.3.post1/cellpose-3.1.1.3.post1-py3-none-any.whl", hash = "sha256:82fb75c430628f826449cc85bdbe6c1c2d7e6aa51e3150835363b9bc22d50294" },
 ]
+
+[package.metadata]
+requires-dist = [
+    { name = "bioimageio-core", marker = "extra == 'all'" },
+    { name = "bioimageio-core", marker = "extra == 'bioimageio'" },
+    { name = "bokeh", marker = "extra == 'all'" },
+    { name = "bokeh", marker = "extra == 'distributed'" },
+    { name = "dask", marker = "extra == 'all'" },
+    { name = "dask", marker = "extra == 'distributed'" },
+    { name = "dask-image", marker = "extra == 'all'" },
+    { name = "dask-image", marker = "extra == 'distributed'" },
+    { name = "dask-jobqueue", marker = "extra == 'all'" },
+    { name = "dask-jobqueue", marker = "extra == 'distributed'" },
+    { name = "distributed", marker = "extra == 'all'" },
+    { name = "distributed", marker = "extra == 'distributed'" },
+    { name = "fastremap" },
+    { name = "fill-voids" },
+    { name = "imagecodecs" },
+    { name = "llvmlite" },
+    { name = "natsort" },
+    { name = "nd2", marker = "extra == 'all'" },
+    { name = "numba", specifier = ">=0.53.0" },
+    { name = "numpy", specifier = ">=2.2.0,<2.3" },
+    { name = "opencv-python-headless" },
+    { name = "pyarrow", marker = "extra == 'all'" },
+    { name = "pyarrow", marker = "extra == 'distributed'" },
+    { name = "pynrrd", marker = "extra == 'all'" },
+    { name = "pyqt6", marker = "extra == 'all'" },
+    { name = "pyqt6", marker = "extra == 'gui'" },
+    { name = "pyqt6-sip", marker = "extra == 'all'" },
+    { name = "pyqt6-sip", marker = "extra == 'gui'" },
+    { name = "pyqtgraph", marker = "extra == 'all'", specifier = ">=0.11.0rc0" },
+    { name = "pyqtgraph", marker = "extra == 'gui'", specifier = ">=0.11.0rc0" },
+    { name = "pyyaml", marker = "extra == 'all'" },
+    { name = "pyyaml", marker = "extra == 'distributed'" },
+    { name = "qtpy", marker = "extra == 'all'" },
+    { name = "qtpy", marker = "extra == 'gui'" },
+    { name = "roifile" },
+    { name = "scipy" },
+    { name = "sphinx", marker = "extra == 'docs'", specifier = ">=3.0" },
+    { name = "sphinx-argparse", marker = "extra == 'docs'" },
+    { name = "sphinx-rtd-theme", marker = "extra == 'docs'" },
+    { name = "sphinxcontrib-apidoc", marker = "extra == 'docs'" },
+    { name = "superqt", marker = "extra == 'all'" },
+    { name = "superqt", marker = "extra == 'gui'" },
+    { name = "tifffile" },
+    { name = "torch", specifier = ">=1.6" },
+    { name = "tqdm" },
+    { name = "zarr", marker = "extra == 'all'" },
+    { name = "zarr", marker = "extra == 'distributed'" },
+]
+provides-extras = ["docs", "gui", "distributed", "bioimageio", "all"]
 
 [[package]]
 name = "certifi"
@@ -201,7 +249,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "affine", specifier = "==2.4.0" },
-    { name = "cellpose", specifier = "==3.1.1.3" },
+    { name = "cellpose", url = "https://github.com/instantomics/sparrow/releases/download/cellpose-3.1.1.3.post1/cellpose-3.1.1.3.post1-py3-none-any.whl" },
     { name = "numpy", specifier = "==2.2.6" },
     { name = "opencv-python-headless", specifier = "==4.12.0.88" },
     { name = "rasterio", specifier = "==1.4.3" },
