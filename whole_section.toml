@@ -1,0 +1,70 @@
+schema_version = 1
+id = "wagner-reviewed-z4"
+
+[execution]
+entrypoint = "whole_section.py"
+launcher = "launch_whole_section.py"
+network_access = "full"
+python_module = "Python/3.11.5-GCCcore-13.2.0"
+
+[method]
+segmentation_id = "f01z4v3-d100"
+upstream_repository = "https://github.com/saeyslab/napari-sparrow"
+upstream_commit = "fcdb27cabe51cbb8b3f0f6d2b2a58530e9fbc43f"
+
+[model]
+file_name = "cyto3"
+url = "https://www.cellpose.org/models/cyto3"
+size_bytes = 26566255
+sha256 = "2dc3087a8abd7da46d1ab0ddd5824639933cc3ff63b382af3fa1939a392db93c"
+
+[parameters]
+z_plane = 4
+diameter = 100
+flow_threshold = 0.85
+cellprob_threshold = -4.0
+min_size = 100
+chunk_pixels = 4096
+overlap_pixels = 205
+polyt_background_filter = 285
+dapi_background_filter = 135
+polyt_clahe_clip = 20.0
+dapi_clahe_clip = 5.0
+cellpose_model = "cyto3"
+
+[resources]
+cpus = 16
+memory_gib = 250
+walltime_seconds = 86400
+gpus = 1
+temporary_storage_gib = 200
+
+[slurm]
+account = "wouter_saelens"
+partition = "gpu_h100_64C_128T_2TB"
+
+[[sections]]
+section_id = "spatial-animal-03-1000plex-v2"
+input_root = "output/sources/wagner2026_merscope/inputs/spatial-animal-03-1000plex-v2"
+image_shape = [55961, 26237]
+dapi_size = 2936501610
+dapi_sha256 = "83c045254bb7a06b2d9c701f5c5bd8fbee79b5429eac0a58f37363fc75c17ef0"
+polyt_size = 2936501610
+polyt_sha256 = "05e307fb654f78d403ce9f1cddb2e903c450c40f54046898dd7d79e7363369b1"
+affine_size = 227
+affine_sha256 = "e914d1639569a232dc8940cbdaa6b0ca09b9d4323d7d09fb088a0d7c0cec5833"
+output = "output/analysis/wagner_segmentation_story/source_segmentations/sparrow/spatial-animal-03-1000plex-v2.parquet"
+receipt = "output/analysis/wagner_segmentation_story/source_segmentations/sparrow/spatial-animal-03-1000plex-v2.receipt.json"
+
+[[sections]]
+section_id = "spatial-animal-04-1000plex-v2"
+input_root = "output/sources/wagner2026_merscope/inputs/spatial-animal-04-1000plex-v2"
+image_shape = [54043, 48565]
+dapi_size = 5249200686
+dapi_sha256 = "6565e1e8586b633b52f8c67ca18a6297037f957120387e9b16fa6004d8ea53f7"
+polyt_size = 5249200686
+polyt_sha256 = "8638f560c6914056f95d06b09304b8ebdd90bf0f79b244a3b5ec038c986ca580"
+affine_size = 227
+affine_sha256 = "2bf71f228be83ba187d391bafb8a287bb1f49a83fffa8444497bd7a05e420e5f"
+output = "output/analysis/wagner_segmentation_story/source_segmentations/sparrow/spatial-animal-04-1000plex-v2.parquet"
+receipt = "output/analysis/wagner_segmentation_story/source_segmentations/sparrow/spatial-animal-04-1000plex-v2.receipt.json"

@@ -5,14 +5,20 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sparrow-reference-tests"
 version = "0.0.0"
-requires-python = ">=3.13,<3.14"
-dependencies = []
+requires-python = ">=3.11,<3.12"
+dependencies = [
+  "cellpose==3.1.1.3",
+  "datashader==0.19.1",
+  "opencv-python-headless==4.11.0.86",
+  "sparrow @ git+https://github.com/saeyslab/napari-sparrow.git@fcdb27cabe51cbb8b3f0f6d2b2a58530e9fbc43f",
+  "torch==2.6.0+cu124",
+]
 
 [dependency-groups]
 dev = [
   "affine==2.4.0",
-  "numpy==2.2.6",
-  "pytest==9.0.2",
+  "numpy==1.26.4",
+  "pytest==8.4.2",
   "rasterio==1.4.3",
   "ruff==0.13.2",
   "shapely==2.1.2",
@@ -21,6 +27,14 @@ dev = [
 
 [tool.uv]
 package = false
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu124" }
+
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
