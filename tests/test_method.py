@@ -98,7 +98,9 @@ def test_hole_fragments_preserve_mask_and_enclosed_cell():
     assert all(part.intersection(center).area == 0 for part in ring)
 
 
-def test_posterior_types_final_geometry_from_visible_field(monkeypatch, tmp_path):
+def test_posterior_types_final_geometry_from_visible_field(
+    monkeypatch, tmp_path, native_annotation_source
+):
     model_path = tmp_path / "model"
     model_path.touch()
     monkeypatch.setattr(method, "_MODEL_PATH", model_path)
@@ -127,9 +129,15 @@ def test_posterior_types_final_geometry_from_visible_field(monkeypatch, tmp_path
 
     def matched(genes):
         calls.append(tuple(genes))
-        return SimpleNamespace(gene_ids=("A", "B"), counts=sparse.csr_matrix([[9, 1], [1, 9]]))
+        return SimpleNamespace(
+            gene_ids=("A", "B"), counts=sparse.csr_matrix([[9, 1]] * 6 + [[1, 9]] * 6)
+        )
 
-    reference = SimpleNamespace(cell_type_labels=("alpha", "beta"), matched_expression=matched)
+    reference = SimpleNamespace(
+        cell_type_labels=("alpha",) * 6 + ("beta",) * 6,
+        cell_ids=tuple(f"ref-{index}" for index in range(12)),
+        matched_expression=matched,
+    )
     field = SimpleNamespace(
         field_handle="visible-field",
         information_condition="labeled_reference",
@@ -158,8 +166,8 @@ def test_posterior_types_final_geometry_from_visible_field(monkeypatch, tmp_path
     (prediction,) = submissions
     first, second = prediction.cells
     assert prediction.nuclei == ()
-    assert first.type_probabilities["alpha"] > 0.9
-    assert second.type_probabilities["beta"] > 0.8
+    assert 0.5 < first.type_probabilities["alpha"] < 0.65
+    assert 0.5 < second.type_probabilities["beta"] < 0.6
     assert calls == [transcripts.gene_ids]
     assert first.vertices[:, 0].min() == 12
     # Removing all RNA changes probabilities but cannot move or remove cells.
@@ -168,9 +176,7 @@ def test_posterior_types_final_geometry_from_visible_field(monkeypatch, tmp_path
         gene_index=np.array([], dtype=int),
         coordinates=np.empty((0, 2)),
     )
-    typed_empty = method.type_cells(
-        prediction.cells, empty, reference, concentration=20, smoothing=0.05
-    )
+    typed_empty = method.type_cells(prediction.cells, empty, reference, config=config)
     for original, cell in zip(prediction.cells, typed_empty, strict=True):
         assert cell.instance_id == original.instance_id
         assert cell.vertices is original.vertices

@@ -14,7 +14,7 @@ default_preset = "vizgen"
 
 [[integrations.presets]]
 id = "vizgen"
-parameters = { background_filter_size = 135, batch_size = 8, cellprob_threshold = -4.0, clahe_clip = 18.5, diameter = 100.0, flow_threshold = 0.85, min_size = 80, torch_threads = 4, typing_concentration = 20.0, typing_smoothing = 0.05 }
+parameters = { background_filter_size = 135, batch_size = 8, cellprob_threshold = -4.0, clahe_clip = 18.5, diameter = 100.0, flow_threshold = 0.85, min_size = 80, torch_threads = 4, typing_marker_count = 20, typing_min_log2_fold_change = 1.0, typing_min_detection_fraction = 0.25, typing_iterations = 5, typing_prior_count = 8.0, typing_seed = 0 }
 
 [execution]
 entrypoint = "run_reference.py"

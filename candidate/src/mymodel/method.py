@@ -21,14 +21,14 @@ from shapely import make_valid
 from shapely.geometry import GeometryCollection, LineString, MultiPolygon, Polygon, box, shape
 from shapely.ops import split
 
-from .cell_typing import type_cells
+from .cell_typing import MarkerTypingConfig, type_cells
 
 LOGGER = logging.getLogger(__name__)
 _MODEL_PATH = Path(__file__).with_name("cytotorch_0")
 
 
 @dataclass(frozen=True)
-class SparrowConfig:
+class SparrowConfig(MarkerTypingConfig):
     background_filter_size: int = 135
     batch_size: int = 8
     cellprob_threshold: float = -4.0
@@ -37,8 +37,6 @@ class SparrowConfig:
     flow_threshold: float = 0.85
     min_size: int = 80
     torch_threads: int = 4
-    typing_concentration: float = 20.0
-    typing_smoothing: float = 0.05
 
 
 def load_config(path: str | Path) -> SparrowConfig:
@@ -70,16 +68,12 @@ def _validate_config(config: SparrowConfig) -> None:
         "clahe_clip",
         "diameter",
         "flow_threshold",
-        "typing_concentration",
-        "typing_smoothing",
     ):
         value = getattr(config, name)
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(f"{name} must be a number")
         if not math.isfinite(value) or value <= 0:
             raise ValueError(f"{name} must be positive and finite")
-    if config.typing_smoothing >= 1:
-        raise ValueError("typing_smoothing must be less than one")
     threshold = config.cellprob_threshold
     if isinstance(threshold, bool) or not isinstance(threshold, (int, float)):
         raise TypeError("cellprob_threshold must be a number")
@@ -161,8 +155,7 @@ def segment_field(field, config: SparrowConfig) -> SegmentationPrediction:
             cells,
             field.load_transcripts(),
             reference,
-            concentration=config.typing_concentration,
-            smoothing=config.typing_smoothing,
+            config=config,
         )
     return SegmentationPrediction(cells=tuple(cells), nuclei=())
 
