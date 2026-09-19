@@ -11,17 +11,52 @@ nuclear signal as the secondary channel.
 The wrapper uses the task's middle-plane images and treats a registered
 cytoplasm channel as Poly-T-compatible. A field without aligned cytoplasm and
 nuclear images fails rather than silently switching methods. It returns
-whole-cell boundaries only.
+whole-cell boundaries with reference-guided type probabilities when labels are
+supplied, and no nuclei. The task owns the [candidate contract](../../tasks/segmentation/contracts/contract.md).
 
 SPArrOW itself currently requires Python 3.11 and NumPy below 2, which is
 incompatible with the task runtime. The benchmark candidate therefore
 implements only its small image-preprocessing recipe and calls the pinned
 upstream Cellpose package directly; SPArrOW's SpatialData orchestration,
-transcript allocation, QC, and clustering stages are intentionally omitted from
-that candidate because they do not define the submitted boundaries. A
+QC and clustering stages are omitted. Transcript allocation and supervised typing
+are wrapper adaptations described below, not upstream SPArrOW cell-type inference. A
 reproducible compatibility wheel changes only Cellpose's dependency metadata so
 its unchanged code can use the task runtime's Python-3.13-compatible NumPy
 version.
+
+## Reference-guided typing
+
+SPArrOW's image recipe remains the sole source of geometry. The wrapper counts
+transcripts strictly inside each final submitted polygon, after clipping and
+simplification, and uses only the supplied labeled single-cell reference for
+typing. Shared features follow the task's name-matching and duplicate-feature
+aggregation policy. Unmatched transcripts do not contribute typing evidence.
+
+Each type's expression profile is the mean of shared-panel-normalized reference
+cells, giving equal influence to cells rather than sequencing depth. A
+Dirichlet-multinomial observation model provides probabilities over the exact
+visible labels. Its finite concentration allows biological overdispersion instead
+of treating every transcript as independent evidence for a fixed profile; a small
+uniform gene component avoids impossibility claims from reference sampling zeros.
+The parameters are fixed in the [preset](reference.toml), not tuned to evaluation
+outcomes. Type priors are equal: reference sampling frequencies need not describe
+the tissue's composition.
+
+Empty cells, zero shared genes, and a wholly RNA-empty shared reference return
+the equal-type prior. A single shared gene cannot distinguish normalized profiles;
+few genes or transcripts yield only the evidence this model supports, without a
+hard typing threshold. A reference type with no shared-panel RNA retains a
+neutral mean profile rather than being ruled out. No `UNKNOWN` mass is introduced
+for sparsity or panel mismatch: neither establishes that a cell belongs to an
+unrepresented type. This is closed-set model uncertainty, not calibrated
+out-of-reference detection. Platform effects and within-type heterogeneity can
+still miscalibrate probabilities.
+
+The transport cannot represent holes. Hole-bearing masks are deterministically
+cut into hole-free fragments without filling background or enclosed cells; each
+fragment is typed from its own transcripts. This representation can change
+instance counts and introduces internal cut boundaries, but preserves the
+SPArrOW footprint before the existing vertex-budget simplification.
 
 The exact Cellpose 3 `cyto` weights are downloaded before candidate freezing
 from the upstream model endpoint and accepted only when their size and SHA-256

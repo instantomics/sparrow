@@ -18,7 +18,10 @@ from segmentation import PolygonInstance, SegmentationPrediction
 from segmentation.dataset_io import _load_ngff_image
 from segmentation.schema import MAX_POLYGON_VERTICES
 from shapely import make_valid
-from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, box, shape
+from shapely.geometry import GeometryCollection, LineString, MultiPolygon, Polygon, box, shape
+from shapely.ops import split
+
+from .cell_typing import type_cells
 
 LOGGER = logging.getLogger(__name__)
 _MODEL_PATH = Path(__file__).with_name("cytotorch_0")
@@ -34,6 +37,8 @@ class SparrowConfig:
     flow_threshold: float = 0.85
     min_size: int = 80
     torch_threads: int = 4
+    typing_concentration: float = 20.0
+    typing_smoothing: float = 0.05
 
 
 def load_config(path: str | Path) -> SparrowConfig:
@@ -61,12 +66,20 @@ def _validate_config(config: SparrowConfig) -> None:
         raise ValueError("background_filter_size must be odd")
     if config.torch_threads > 4:
         raise ValueError("torch_threads must not exceed the declared CPU count")
-    for name in ("clahe_clip", "diameter", "flow_threshold"):
+    for name in (
+        "clahe_clip",
+        "diameter",
+        "flow_threshold",
+        "typing_concentration",
+        "typing_smoothing",
+    ):
         value = getattr(config, name)
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(f"{name} must be a number")
         if not math.isfinite(value) or value <= 0:
             raise ValueError(f"{name} must be positive and finite")
+    if config.typing_smoothing >= 1:
+        raise ValueError("typing_smoothing must be less than one")
     threshold = config.cellprob_threshold
     if isinstance(threshold, bool) or not isinstance(threshold, (int, float)):
         raise TypeError("cellprob_threshold must be a number")
@@ -140,6 +153,17 @@ def segment_field(field, config: SparrowConfig) -> SegmentationPrediction:
         pixel_size=nuclear.pixel_size_um,
         field_bounds=field.field_bounds,
     )
+    if field.information_condition == "labeled_reference":
+        reference = field.load_reference()
+        if reference is None:
+            raise ValueError("labeled-reference field did not supply a reference")
+        cells = type_cells(
+            cells,
+            field.load_transcripts(),
+            reference,
+            concentration=config.typing_concentration,
+            smoothing=config.typing_smoothing,
+        )
     return SegmentationPrediction(cells=tuple(cells), nuclei=())
 
 
@@ -200,29 +224,54 @@ def _labels_to_cells(
         polygon = _simplify_to_limit(polygon, min(scale_x, scale_y))
         if polygon is None:
             continue
-        exterior = np.asarray(polygon.exterior.coords[:-1], dtype=np.float64)
-        interiors = tuple(
-            np.asarray(ring.coords[:-1], dtype=np.float64)
-            for ring in polygon.interiors
-            if len(ring.coords) >= 4
-        )
-        accepted.append(polygon)
-        result.append(PolygonInstance(f"sparrow-cell-{label}", exterior, interior_rings=interiors))
+        parts = _hole_free_parts(polygon)
+        for index, part in enumerate(parts):
+            part = _simplify_to_limit(part, min(scale_x, scale_y))
+            if part is None:
+                continue
+            exterior = np.asarray(part.exterior.coords[:-1], dtype=np.float64)
+            suffix = f"-part-{index + 1}" if len(parts) > 1 else ""
+            accepted.append(part)
+            result.append(PolygonInstance(f"sparrow-cell-{label}{suffix}", exterior))
     return result
+
+
+def _hole_free_parts(polygon: Polygon) -> list[Polygon]:
+    # The transport admits exterior rings only. Cut through holes rather than
+    # filling them (which would assign background or another cell's transcripts).
+    pending = [polygon]
+    result = []
+    while pending:
+        part = pending.pop()
+        if not part.interiors:
+            result.append(part)
+            continue
+        y = Polygon(part.interiors[0]).representative_point().y
+        left, _, right, _ = part.bounds
+        cut = LineString([(left - 1, y), (right + 1, y)])
+        pieces = list(split(part, cut).geoms)
+        if sum(len(piece.interiors) for piece in pieces) >= len(part.interiors):
+            raise ValueError("could not represent a SPArrOW polygon without interior rings")
+        pending.extend(pieces)
+    return sorted(result, key=lambda part: part.bounds)
 
 
 def _largest_polygon(geometry) -> Polygon | None:
     if isinstance(geometry, Polygon):
         return geometry if not geometry.is_empty and geometry.area > 0 else None
     if isinstance(geometry, (MultiPolygon, GeometryCollection)):
-        polygons = [item for child in geometry.geoms if (item := _largest_polygon(child)) is not None]
+        polygons = [
+            item for child in geometry.geoms if (item := _largest_polygon(child)) is not None
+        ]
         if polygons:
             return max(enumerate(polygons), key=lambda item: (item[1].area, -item[0]))[1]
     return None
 
 
 def _vertex_count(polygon: Polygon) -> int:
-    return len(polygon.exterior.coords) - 1 + sum(len(ring.coords) - 1 for ring in polygon.interiors)
+    return (
+        len(polygon.exterior.coords) - 1 + sum(len(ring.coords) - 1 for ring in polygon.interiors)
+    )
 
 
 def _simplify_to_limit(polygon: Polygon, pixel_size: float) -> Polygon | None:
@@ -230,7 +279,9 @@ def _simplify_to_limit(polygon: Polygon, pixel_size: float) -> Polygon | None:
         return polygon
     tolerance = pixel_size / 4
     for _ in range(16):
-        simplified = _largest_polygon(make_valid(polygon.simplify(tolerance, preserve_topology=True)))
+        simplified = _largest_polygon(
+            make_valid(polygon.simplify(tolerance, preserve_topology=True))
+        )
         if simplified is not None and _vertex_count(simplified) <= MAX_POLYGON_VERTICES:
             return simplified
         tolerance *= 2
