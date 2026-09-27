@@ -16,7 +16,7 @@ class _Tools:
         self.calls.append((name, arguments))
         if name == "validate_model":
             return {"valid": True}
-        if name == "start_evaluation":
+        if name == "evaluate":
             return {"job_id": "evaluation"}
         if name in {"wait_job", "inspect_job"}:
             return {"status": "succeeded"}
