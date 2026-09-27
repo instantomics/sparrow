@@ -33,6 +33,27 @@ def _reference_provenance(receipt: dict) -> tuple[str, bool]:
     return matches[0]["commit"], matches[0]["dirty"]
 
 
+def _candidate_source_files(source_root: Path, config: dict) -> dict[Path, str]:
+    declared = config["candidate_source"]
+    return {
+        source_root / "candidate/iomix_candidate.json": declared["manifest_sha256"],
+        source_root / "candidate/src/mymodel/__init__.py": declared["init_sha256"],
+        source_root / "candidate/src/mymodel/method.py": declared["method_sha256"],
+        source_root / "candidate/src/mymodel/cell_typing.py": declared["cell_typing_sha256"],
+        source_root
+        / "candidate/src/mymodel/native_annotation.py": declared["native_annotation_sha256"],
+    }
+
+
+def _validate_candidate_source(source_root: Path, config: dict) -> dict[str, str]:
+    observed = {}
+    for path, expected in _candidate_source_files(source_root, config).items():
+        if not path.is_file() or (digest := _sha256(path)) != expected:
+            raise ValueError(f"candidate source does not match the canonical binding: {path}")
+        observed[str(path.relative_to(source_root))] = digest
+    return observed
+
+
 def main() -> None:
     args = _parse_args()
     source_root = Path(__file__).parent.resolve()
@@ -50,8 +71,7 @@ def main() -> None:
     active_receipt = Path(active_receipt_value).resolve()
     receipt_document = json.loads(active_receipt.read_text(encoding="utf-8"))
     reference_commit, dirty = _reference_provenance(receipt_document)
-    if dirty:
-        raise RuntimeError("commit the reference integration before launching exact execution")
+    candidate_source_sha256 = _validate_candidate_source(source_root, config)
     python_executable = Path(receipt_document["python"]["executable"])
     python_root = os.environ.get("EBROOTPYTHON")
     library_path = os.environ.get("LD_LIBRARY_PATH")
@@ -73,22 +93,43 @@ def main() -> None:
     if control.exists():
         raise FileExistsError(f"run-control directory already exists: {control}")
     if not args.yes:
-        print(json.dumps({"section": args.section_id, "resources": config["resources"]}, indent=2))
+        print(
+            json.dumps(
+                {
+                    "section": args.section_id,
+                    "resources": config["resources"],
+                    "candidate_id": config["provenance"]["candidate_id"],
+                    "reference_commit": reference_commit,
+                    "reference_dirty": dirty,
+                },
+                indent=2,
+            )
+        )
         print("Re-run with --yes to stage and submit the exact managed execution.")
         return
+    if dirty:
+        raise RuntimeError("commit the reference integration before launching exact execution")
 
     control.mkdir(parents=True)
     entrypoint = control / "whole_section.py"
     config_path = control / "whole_section.toml"
     bootstrap_receipt = control / "environment_receipt.json"
+    candidate_stage = control / "candidate_source"
+    (candidate_stage / "mymodel").mkdir(parents=True)
     shutil.copyfile(entrypoint_source, entrypoint)
     shutil.copyfile(config_source, config_path)
     shutil.copyfile(active_receipt, bootstrap_receipt)
+    for source in _candidate_source_files(source_root, config):
+        relative = source.relative_to(source_root / "candidate")
+        if relative.parts[0] == "src":
+            relative = Path(*relative.parts[1:])
+        shutil.copyfile(source, candidate_stage / relative)
     stage_receipt = {
         "reference_commit": reference_commit,
         "entrypoint_sha256": _sha256(entrypoint),
         "config_sha256": _sha256(config_path),
         "environment_receipt_sha256": _sha256(bootstrap_receipt),
+        "candidate_source_sha256": candidate_source_sha256,
         "python_runtime": {
             "executable": str(python_executable),
             "module": config["execution"]["python_module"],
@@ -130,6 +171,8 @@ def main() -> None:
         reference_commit,
         "--environment-receipt",
         str(bootstrap_receipt),
+        "--candidate-source",
+        str(candidate_stage),
     ]
     hours, remainder = divmod(resources["walltime_seconds"], 3600)
     minutes, seconds = divmod(remainder, 60)

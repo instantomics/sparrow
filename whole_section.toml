@@ -1,43 +1,78 @@
 schema_version = 1
-id = "wagner-reviewed-z4"
+id = "wagner-sparrow-current-4.3.0"
 
 [execution]
 entrypoint = "whole_section.py"
 launcher = "launch_whole_section.py"
 network_access = "full"
-python_module = "Python/3.11.5-GCCcore-13.2.0"
+python_module = "Python/3.13.1-GCCcore-14.2.0"
 
 [method]
-segmentation_id = "f01z4v3-d100"
+segmentation_id = "candidate_sha256_897309bb6c0d222b801e4d54ea0951d1c961ca9844af58d80e2e14c9346f1606:whole-section-v1"
 upstream_repository = "https://github.com/saeyslab/napari-sparrow"
 upstream_commit = "fcdb27cabe51cbb8b3f0f6d2b2a58530e9fbc43f"
+image_plane = "reviewed 2D uint16 z4 export; middle plane of z0-z7"
+stack_order = ["DAPI", "PolyT"]
+cellpose_channels = [2, 1]
+
+[provenance]
+evaluation_id = "candidate_evaluation:99888e07c47c41568e70f6cd4868afb2"
+run_id = "99888e07c47c41568e70f6cd4868afb2"
+architecture_id = "architecture_sha256_67eaca20aaf6132640c96271642f57b6cd4f6ef09d12db9eb3b50a960ed744d3"
+parameterization_id = "parameterization_sha256_b880b76c25ada1d1c404a9316a7dd3386c2045ca283e2ecaf17bd07ed8e3c92c"
+candidate_id = "candidate_sha256_897309bb6c0d222b801e4d54ea0951d1c961ca9844af58d80e2e14c9346f1606"
+candidate_revision = "sha256:e567aca1d609985ebb1d5a9287b1bed9833f511b9301bf74f86dc7fcacdedcad"
+task_release_id = "4.3.0"
+task_commit = "c84cbb078647ce409b1fb15072c270c0a5a48119"
+score = 29.1723525849172
+
+[candidate_source]
+manifest_sha256 = "b207fb43965317a5b2dd0d2f72496d1473882ee8f7709ec90efe22b89dc9b8e6"
+init_sha256 = "defc0077fcb3f1c17270dbd1cb2bd725b6e14b65f1cac86f3cebdd082db2f932"
+method_sha256 = "51f179268400662bf5f9f10fdccf52abc416d2d0a0501450a2f1583d23ede62f"
+cell_typing_sha256 = "ebc37ed0492fdcc7c0f1d4dfc9106825d16f604bff966440407022f9a8e2d5b1"
+native_annotation_sha256 = "1ec95e5969de4b357502058660905dfc9ecefca14aee1065340cf10b12a175d9"
 
 [model]
-file_name = "cyto3"
-url = "https://www.cellpose.org/models/cyto3"
-size_bytes = 26566255
-sha256 = "2dc3087a8abd7da46d1ab0ddd5824639933cc3ff63b382af3fa1939a392db93c"
+file_name = "cytotorch_0"
+url = "https://www.cellpose.org/models/cytotorch_0"
+size_bytes = 26563614
+sha256 = "6a852487b98a3ad91e4e86c969cac520aaac13c609288aad8bd01d4cf76370c6"
 
 [parameters]
-z_plane = 4
-diameter = 100
-flow_threshold = 0.85
+background_filter_size = 135
+batch_size = 8
 cellprob_threshold = -4.0
-min_size = 100
-chunk_pixels = 4096
-overlap_pixels = 205
-polyt_background_filter = 285
-dapi_background_filter = 135
-polyt_clahe_clip = 20.0
-dapi_clahe_clip = 5.0
-cellpose_model = "cyto3"
+clahe_clip = 18.5
+diameter = 100.0
+flow_threshold = 0.85
+min_size = 80
+torch_threads = 4
+typing_marker_count = 20
+typing_min_log2_fold_change = 1.0
+typing_min_detection_fraction = 0.25
+typing_iterations = 5
+typing_prior_count = 8.0
+typing_seed = 0
+
+[adaptation]
+candidate_window_um = 150.0
+owned_core_um = 100.0
+halo_um = 25.0
+ownership = "clip every candidate polygon to its half-open owned core"
+device = "cuda:0"
+window_batching = "serial; Cellpose internal batch_size remains canonical"
+model_lifecycle = "one pinned Cellpose model instance reused across windows"
+preprocessing = "independent per candidate window"
+geometry = "candidate labels_to_cells clipped to disjoint cores; no cross-window or top-agent merging"
+boundary_windows = "shift inward to preserve the evaluated candidate window size"
 
 [resources]
 cpus = 16
-memory_gib = 250
+memory_gib = 128
 walltime_seconds = 86400
 gpus = 1
-temporary_storage_gib = 200
+temporary_storage_gib = 20
 
 [slurm]
 account = "wouter_saelens"
@@ -53,8 +88,8 @@ polyt_size = 2936501610
 polyt_sha256 = "05e307fb654f78d403ce9f1cddb2e903c450c40f54046898dd7d79e7363369b1"
 affine_size = 227
 affine_sha256 = "e914d1639569a232dc8940cbdaa6b0ca09b9d4323d7d09fb088a0d7c0cec5833"
-output = "output/analysis/wagner_segmentation_story/source_segmentations/sparrow/spatial-animal-03-1000plex-v2.parquet"
-receipt = "output/analysis/wagner_segmentation_story/source_segmentations/sparrow/spatial-animal-03-1000plex-v2.receipt.json"
+output = "output/analysis/wagner_segmentation_story_4_3_0/source_segmentations/sparrow/spatial-animal-03-1000plex-v2.parquet"
+receipt = "output/analysis/wagner_segmentation_story_4_3_0/source_segmentations/sparrow/spatial-animal-03-1000plex-v2.receipt.json"
 
 [[sections]]
 section_id = "spatial-animal-04-1000plex-v2"
@@ -66,5 +101,5 @@ polyt_size = 5249200686
 polyt_sha256 = "8638f560c6914056f95d06b09304b8ebdd90bf0f79b244a3b5ec038c986ca580"
 affine_size = 227
 affine_sha256 = "2bf71f228be83ba187d391bafb8a287bb1f49a83fffa8444497bd7a05e420e5f"
-output = "output/analysis/wagner_segmentation_story/source_segmentations/sparrow/spatial-animal-04-1000plex-v2.parquet"
-receipt = "output/analysis/wagner_segmentation_story/source_segmentations/sparrow/spatial-animal-04-1000plex-v2.receipt.json"
+output = "output/analysis/wagner_segmentation_story_4_3_0/source_segmentations/sparrow/spatial-animal-04-1000plex-v2.parquet"
+receipt = "output/analysis/wagner_segmentation_story_4_3_0/source_segmentations/sparrow/spatial-animal-04-1000plex-v2.receipt.json"

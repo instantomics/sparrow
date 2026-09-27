@@ -78,12 +78,21 @@ from the upstream model endpoint and accepted only when their size and SHA-256
 match the committed identity. Cellpose notes that this model was trained in
 part on CC-BY-NC data.
 
-The default preset uses SPArrOW's committed Vizgen configuration rather than
-the diameter sweep performed on this benchmark's validation field. That older
-comparison layer used a different z-plane and `cyto3`, so it is not the output
-of this reference.
+The declared Wagner whole-section integration is provenance-bound to the
+successful segmentation 4.3.0 candidate and its canonical preset. The reviewed
+2D z4 exports are the middle plane of the eight-plane source images, so they
+match the candidate's middle-plane selection rather than defining a different
+z-plane recipe. The integration uses the same shared channel preprocessing,
+pinned Cellpose `cyto` model, channel order, geometry conversion, and candidate
+parameters.
 
-The separately declared `wagner-reviewed-z4` whole-section integration
-reproduces that reviewed comparison layer for downstream Wagner analyses. It
-uses z4 imagery, channel-specific SPArrOW preprocessing, Cellpose `cyto3`, and
-the selected diameter of 100 pixels; it is not an alternative benchmark preset.
+Whole sections are evaluated as haloed candidate-sized windows. Boundary
+windows shift inward to preserve the evaluated size, and each prediction is
+clipped to a disjoint owned core without cross-window or historical top-agent
+merging. This can split seam cells but prevents ambiguous cross-window overlap.
+GPU execution and serial window evaluation are recorded adaptations of the
+canonical CPU field execution. The available whole-section inputs do not
+contain the candidate-visible labeled reference, so candidate typing is not run
+and the receipt states that limitation explicitly. Downstream Wagner analysis
+may type the resulting source geometries under its own independently recorded
+contract.
