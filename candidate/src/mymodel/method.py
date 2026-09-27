@@ -114,8 +114,8 @@ def segment_field(field, config: SparrowConfig) -> SegmentationPrediction:
     _validate_aligned_images(nuclear, cytoplasm)
     image = np.stack(
         (
-            _preprocess(nuclear.image, config),
-            _preprocess(cytoplasm.image, config),
+            _preprocess(_middle_plane(nuclear.image), config),
+            _preprocess(_middle_plane(cytoplasm.image), config),
         ),
         axis=-1,
     )
@@ -167,6 +167,11 @@ def _validate_aligned_images(nuclear, cytoplasm) -> None:
         raise ValueError("cytoplasm and nuclear image origins differ")
     if not np.allclose(nuclear.pixel_size_um, cytoplasm.pixel_size_um, rtol=0, atol=1e-12):
         raise ValueError("cytoplasm and nuclear image pixel sizes differ")
+
+
+def _middle_plane(values: np.ndarray) -> np.ndarray:
+    image = np.asarray(values)
+    return image[image.shape[0] // 2] if image.ndim == 3 else image
 
 
 def _preprocess(values: np.ndarray, config: SparrowConfig) -> np.ndarray:

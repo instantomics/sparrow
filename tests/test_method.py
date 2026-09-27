@@ -105,17 +105,31 @@ def test_posterior_types_final_geometry_from_visible_field(
     model_path.touch()
     monkeypatch.setattr(method, "_MODEL_PATH", model_path)
     image = SimpleNamespace(
-        image=np.ones((2, 6), dtype=np.uint16), origin_um=(10, 20), pixel_size_um=(2, 3)
+        image=np.stack(
+            [
+                np.zeros((2, 6), dtype=np.uint16),
+                np.ones((2, 6), dtype=np.uint16),
+                np.full((2, 6), 2, dtype=np.uint16),
+            ]
+        ),
+        origin_um=(10, 20),
+        pixel_size_um=(2, 3),
     )
     masks = np.array([[7, 7, 0, 9, 9, 0], [7, 7, 0, 9, 9, 0]])
     monkeypatch.setattr(method, "_load_ngff_image", lambda *a, **k: image)
     monkeypatch.setattr(method, "_preprocess", lambda values, config: values)
     monkeypatch.setattr(torch, "set_num_threads", lambda n: None, raising=False)
     monkeypatch.setattr(torch, "device", lambda name: name, raising=False)
+    model_inputs = []
+
+    def evaluate(**kwargs):
+        model_inputs.extend(kwargs["x"])
+        return ([masks],)
+
     monkeypatch.setattr(
         cellpose.models,
         "CellposeModel",
-        lambda **kwargs: SimpleNamespace(eval=lambda **kw: ([masks],)),
+        lambda **kwargs: SimpleNamespace(eval=evaluate),
         raising=False,
     )
     # Reference projection order differs from the spatial gene axis. A boundary
@@ -163,6 +177,8 @@ def test_posterior_types_final_geometry_from_visible_field(
         outputs,
     )
     assert not failures
+    assert model_inputs[0].shape == (2, 6, 2)
+    assert np.all(model_inputs[0] == 1)
     (prediction,) = submissions
     first, second = prediction.cells
     assert prediction.nuclei == ()
