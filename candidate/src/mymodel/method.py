@@ -176,7 +176,19 @@ def _middle_plane(values: np.ndarray) -> np.ndarray:
 
 def _preprocess(values: np.ndarray, config: SparrowConfig) -> np.ndarray:
     image = np.asarray(values)
-    if image.ndim != 2 or image.dtype not in (np.dtype("uint8"), np.dtype("uint16")):
+    if image.ndim != 2 or not np.issubdtype(image.dtype, np.number):
+        raise TypeError("SPArrOW preprocessing requires a two-dimensional uint8 or uint16 image")
+    if np.issubdtype(image.dtype, np.floating):
+        if (
+            not np.isfinite(image).all()
+            or (
+                image.size
+                and (image.min() < 0 or image.max() > np.iinfo(np.uint16).max)
+            )
+        ):
+            raise ValueError("floating image intensities must fit the uint16 range")
+        image = np.rint(image).astype(np.uint16)
+    elif image.dtype not in (np.dtype("uint8"), np.dtype("uint16")):
         raise TypeError("SPArrOW preprocessing requires a two-dimensional uint8 or uint16 image")
     opened = ndimage.maximum_filter(
         ndimage.minimum_filter(image, size=config.background_filter_size),

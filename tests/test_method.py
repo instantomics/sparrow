@@ -98,6 +98,29 @@ def test_hole_fragments_preserve_mask_and_enclosed_cell():
     assert all(part.intersection(center).area == 0 for part in ring)
 
 
+def test_preprocess_restores_float_stored_raw_intensities(monkeypatch):
+    observed = []
+
+    class Clahe:
+        def apply(self, image):
+            observed.append(image)
+            return image
+
+    monkeypatch.setattr(cv2, "createCLAHE", lambda **kwargs: Clahe(), raising=False)
+    monkeypatch.setattr(
+        method.ndimage, "minimum_filter", lambda image, size: np.zeros_like(image)
+    )
+    monkeypatch.setattr(method.ndimage, "maximum_filter", lambda image, size: image)
+    values = np.array([[0.2, 10.7], [20.4, 30.9]], dtype=np.float32)
+
+    result = method._preprocess(values, method.SparrowConfig(background_filter_size=1))
+
+    assert result.dtype == np.uint16
+    np.testing.assert_array_equal(
+        observed[0], np.array([[0, 11], [20, 31]], dtype=np.uint16)
+    )
+
+
 def test_posterior_types_final_geometry_from_visible_field(
     monkeypatch, tmp_path, native_annotation_source
 ):
