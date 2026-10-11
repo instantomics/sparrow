@@ -147,10 +147,7 @@ def segment_field(field, config: SparrowConfig) -> SegmentationPrediction:
         pixel_size=nuclear.pixel_size_um,
         field_bounds=field.field_bounds,
     )
-    if field.information_condition in {
-        "labeled_reference",
-        "unmatched_labeled_reference",
-    }:
+    if field.information_condition == "labeled_reference":
         reference = field.load_reference()
         if reference is None:
             raise ValueError("labeled-reference field did not supply a reference")
