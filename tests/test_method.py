@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import numpy as np
+import pytest
 from scipy import sparse
 from shapely.geometry import Polygon, box
 from shapely.ops import unary_union
@@ -119,6 +120,19 @@ def test_preprocess_restores_float_stored_raw_intensities(monkeypatch):
     np.testing.assert_array_equal(
         observed[0], np.array([[0, 11], [20, 31]], dtype=np.uint16)
     )
+
+
+def test_nuclear_z_stack_aligns_with_two_dimensional_cytoplasm():
+    def image(shape, origin=(2629.9, 2720.0)):
+        return SimpleNamespace(
+            image=np.zeros(shape), origin_um=origin, pixel_size_um=(0.2125, 0.2125)
+        )
+
+    method._validate_aligned_images(image((10, 4, 5)), image((4, 5)))
+    with pytest.raises(ValueError, match="shapes differ"):
+        method._validate_aligned_images(image((10, 4, 5)), image((5, 4)))
+    with pytest.raises(ValueError, match="origins differ"):
+        method._validate_aligned_images(image((10, 4, 5)), image((4, 5), origin=(0, 0)))
 
 
 def test_posterior_types_final_geometry_from_visible_field(

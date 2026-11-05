@@ -161,7 +161,9 @@ def segment_field(field, config: SparrowConfig) -> SegmentationPrediction:
 
 
 def _validate_aligned_images(nuclear, cytoplasm) -> None:
-    if np.asarray(nuclear.image).shape != np.asarray(cytoplasm.image).shape:
+    # Only the YX grid must match: Atera supplies a DAPI Z-stack next to 2D
+    # focus images, and segmentation uses one plane of each.
+    if np.asarray(nuclear.image).shape[-2:] != np.asarray(cytoplasm.image).shape[-2:]:
         raise ValueError("cytoplasm and nuclear image shapes differ")
     if not np.allclose(nuclear.origin_um, cytoplasm.origin_um, rtol=0, atol=1e-9):
         raise ValueError("cytoplasm and nuclear image origins differ")
